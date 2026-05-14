@@ -11,7 +11,7 @@ def split_name(full_name):
 
 
 def create_user(request_data):
-    url = f"{OKTA_DOMAIN}/api/v1/users?activate=true"
+    url = f"{OKTA_DOMAIN}/api/v1/users?activate=false"
 
     first_name, last_name = split_name(request_data["full_name"])
 
