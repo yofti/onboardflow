@@ -32,14 +32,35 @@ def employee_summary_blocks(request_data):
         {
             "type": "section",
             "fields": [
-                {"type": "mrkdwn", "text": f"*Name:*\n{request_data.get('full_name', '')}"},
-                {"type": "mrkdwn", "text": f"*Email:*\n{request_data.get('email', '')}"},
-                {"type": "mrkdwn", "text": f"*Department:*\n{request_data.get('department', '')}"},
+                {
+                    "type": "mrkdwn",
+                    "text": f"*Name:*\n{request_data.get('full_name', '')}",
+                },
+                {
+                    "type": "mrkdwn",
+                    "text": f"*Email:*\n{request_data.get('email', '')}",
+                },
+                {
+                    "type": "mrkdwn",
+                    "text": f"*Department:*\n{request_data.get('department', '')}",
+                },
                 {"type": "mrkdwn", "text": f"*Role:*\n{request_data.get('role', '')}"},
-                {"type": "mrkdwn", "text": f"*Manager:*\n{request_data.get('manager', '')}"},
-                {"type": "mrkdwn", "text": f"*Start Date:*\n{request_data.get('start_date', '')}"},
-                {"type": "mrkdwn", "text": f"*Location:*\n{request_data.get('location', '')}"},
-                {"type": "mrkdwn", "text": f"*Requested Access:*\n{format_access(request_data.get('access'))}"},
+                {
+                    "type": "mrkdwn",
+                    "text": f"*Manager:*\n{request_data.get('manager', '')}",
+                },
+                {
+                    "type": "mrkdwn",
+                    "text": f"*Start Date:*\n{request_data.get('start_date', '')}",
+                },
+                {
+                    "type": "mrkdwn",
+                    "text": f"*Location:*\n{request_data.get('location', '')}",
+                },
+                {
+                    "type": "mrkdwn",
+                    "text": f"*Requested Access:*\n{format_access(request_data.get('access'))}",
+                },
             ],
         },
     ]
@@ -147,12 +168,23 @@ def register_onboarding_handlers(app):
         ack()
 
         user_id = body["user"]["id"]
-        selected_record_id = view["state"]["values"]["employee_block"]["employee_select"]["selected_option"]["value"]
+        selected_record_id = view["state"]["values"]["employee_block"][
+            "employee_select"
+        ]["selected_option"]["value"]
 
-        log_step("SLACK", "Employee selected for preview", user=user_id, airtable_record=selected_record_id)
+        log_step(
+            "SLACK",
+            "Employee selected for preview",
+            user=user_id,
+            airtable_record=selected_record_id,
+        )
 
         try:
-            log_step("AIRTABLE", "Loading selected employee record", record=selected_record_id)
+            log_step(
+                "AIRTABLE",
+                "Loading selected employee record",
+                record=selected_record_id,
+            )
             employee_record = airtable_service.get_employee(selected_record_id)
 
             request_data = airtable_service.record_to_request_data(
@@ -235,8 +267,15 @@ def register_onboarding_handlers(app):
                 text=f"✅ Jira ticket `{issue_key}` created.",
             )
 
-            log_step("AIRTABLE", "Updating Airtable status", status="Submitted", record=request_data["airtable_record_id"])
-            airtable_service.update_status(request_data["airtable_record_id"], "Submitted")
+            log_step(
+                "AIRTABLE",
+                "Updating Airtable status",
+                status="Submitted",
+                record=request_data["airtable_record_id"],
+            )
+            airtable_service.update_status(
+                request_data["airtable_record_id"], "Submitted"
+            )
             log_step("AIRTABLE", "Airtable status updated", status="Submitted")
 
             client.chat_postMessage(
@@ -287,14 +326,21 @@ def register_onboarding_handlers(app):
                 },
             ]
 
-            log_step("SLACK", "Posting approval request", channel=SLACK_APPROVER_CHANNEL_ID, issue=issue_key)
+            log_step(
+                "SLACK",
+                "Posting approval request",
+                channel=SLACK_APPROVER_CHANNEL_ID,
+                issue=issue_key,
+            )
             client.chat_postMessage(
                 channel=SLACK_APPROVER_CHANNEL_ID,
                 text=f"Approval needed for onboarding {request_data['full_name']}",
                 blocks=approval_blocks,
             )
 
-            log_step("WORKFLOW", "Submission complete. Waiting for approval", issue=issue_key)
+            log_step(
+                "WORKFLOW", "Submission complete. Waiting for approval", issue=issue_key
+            )
 
             client.chat_postMessage(
                 channel=user_id,
@@ -305,7 +351,12 @@ def register_onboarding_handlers(app):
             )
 
         except Exception as e:
-            log_step("ERROR", "Workflow submission failed", employee=request_data.get("full_name"), error=e)
+            log_step(
+                "ERROR",
+                "Workflow submission failed",
+                employee=request_data.get("full_name"),
+                error=e,
+            )
             client.chat_postMessage(
                 channel=user_id,
                 text=f"❌ Something went wrong while submitting onboarding for {request_data['full_name']}: {e}",
@@ -337,7 +388,10 @@ def register_onboarding_handlers(app):
                 blocks=[
                     {
                         "type": "header",
-                        "text": {"type": "plain_text", "text": "Processing onboarding approval"},
+                        "text": {
+                            "type": "plain_text",
+                            "text": "Processing onboarding approval",
+                        },
                     },
                     *employee_summary_blocks(request_data),
                     {
@@ -353,11 +407,21 @@ def register_onboarding_handlers(app):
                 ],
             )
 
-            log_step("AIRTABLE", "Updating Airtable status", status="Approved", record=airtable_record_id)
+            log_step(
+                "AIRTABLE",
+                "Updating Airtable status",
+                status="Approved",
+                record=airtable_record_id,
+            )
             airtable_service.update_status(airtable_record_id, "Approved")
             log_step("AIRTABLE", "Airtable status updated", status="Approved")
 
-            log_step("OKTA", "Creating Okta user", employee=request_data["full_name"], email=request_data["email"])
+            log_step(
+                "OKTA",
+                "Creating Okta user",
+                employee=request_data["full_name"],
+                email=request_data["email"],
+            )
             okta_user = okta_service.create_user(request_data)
             okta_id = okta_user["id"]
             log_step("OKTA", "Created Okta user", okta_id=okta_id)
@@ -369,15 +433,30 @@ def register_onboarding_handlers(app):
             )
             log_step("JIRA", "Approval comment added", issue=issue_key)
 
-            log_step("JIRA", "Transitioning Jira issue", issue=issue_key, transition=JIRA_APPROVED_TRANSITION_ID)
+            log_step(
+                "JIRA",
+                "Transitioning Jira issue",
+                issue=issue_key,
+                transition=JIRA_APPROVED_TRANSITION_ID,
+            )
             jira_service.transition_issue(issue_key, JIRA_APPROVED_TRANSITION_ID)
             log_step("JIRA", "Jira transition attempted", issue=issue_key)
 
-            log_step("AIRTABLE", "Updating Airtable status", status="Provisioned", record=airtable_record_id)
+            log_step(
+                "AIRTABLE",
+                "Updating Airtable status",
+                status="Provisioned",
+                record=airtable_record_id,
+            )
             airtable_service.update_status(airtable_record_id, "Provisioned")
             log_step("AIRTABLE", "Airtable status updated", status="Provisioned")
 
-            log_step("WORKFLOW", "Onboarding workflow completed", employee=request_data["full_name"], issue=issue_key)
+            log_step(
+                "WORKFLOW",
+                "Onboarding workflow completed",
+                employee=request_data["full_name"],
+                issue=issue_key,
+            )
 
             client.chat_update(
                 channel=body["channel"]["id"],
@@ -386,7 +465,10 @@ def register_onboarding_handlers(app):
                 blocks=[
                     {
                         "type": "header",
-                        "text": {"type": "plain_text", "text": "Onboarding approved and provisioned"},
+                        "text": {
+                            "type": "plain_text",
+                            "text": "Onboarding approved and provisioned",
+                        },
                     },
                     *employee_summary_blocks(request_data),
                     {
@@ -415,12 +497,20 @@ def register_onboarding_handlers(app):
             )
 
         except Exception as e:
-            log_step("ERROR", "Approval workflow failed", employee=request_data["full_name"], issue=issue_key, error=e)
+            log_step(
+                "ERROR",
+                "Approval workflow failed",
+                employee=request_data["full_name"],
+                issue=issue_key,
+                error=e,
+            )
 
             try:
                 airtable_service.update_status(airtable_record_id, "Failed")
             except Exception as airtable_error:
-                log_step("ERROR", "Could not mark Airtable as Failed", error=airtable_error)
+                log_step(
+                    "ERROR", "Could not mark Airtable as Failed", error=airtable_error
+                )
 
             try:
                 jira_service.add_comment(
@@ -428,7 +518,9 @@ def register_onboarding_handlers(app):
                     f"Approval clicked by Slack user {approver}, but automation failed: {e}",
                 )
             except Exception as jira_error:
-                log_step("ERROR", "Could not add Jira failure comment", error=jira_error)
+                log_step(
+                    "ERROR", "Could not add Jira failure comment", error=jira_error
+                )
 
             client.chat_postMessage(
                 channel=SLACK_APPROVER_CHANNEL_ID,
@@ -454,16 +546,31 @@ def register_onboarding_handlers(app):
         )
 
         try:
-            log_step("AIRTABLE", "Updating Airtable status", status="Rejected", record=airtable_record_id)
+            log_step(
+                "AIRTABLE",
+                "Updating Airtable status",
+                status="Rejected",
+                record=airtable_record_id,
+            )
             airtable_service.update_status(airtable_record_id, "Rejected")
 
             log_step("JIRA", "Adding rejection comment", issue=issue_key)
             jira_service.add_comment(issue_key, f"Rejected in Slack by <@{rejector}>.")
 
-            log_step("JIRA", "Transitioning Jira issue", issue=issue_key, transition=JIRA_REJECTED_TRANSITION_ID)
+            log_step(
+                "JIRA",
+                "Transitioning Jira issue",
+                issue=issue_key,
+                transition=JIRA_REJECTED_TRANSITION_ID,
+            )
             jira_service.transition_issue(issue_key, JIRA_REJECTED_TRANSITION_ID)
 
-            log_step("WORKFLOW", "Onboarding rejected", employee=request_data["full_name"], issue=issue_key)
+            log_step(
+                "WORKFLOW",
+                "Onboarding rejected",
+                employee=request_data["full_name"],
+                issue=issue_key,
+            )
 
             client.chat_update(
                 channel=body["channel"]["id"],
@@ -490,7 +597,13 @@ def register_onboarding_handlers(app):
             )
 
         except Exception as e:
-            log_step("ERROR", "Reject workflow failed", employee=request_data["full_name"], issue=issue_key, error=e)
+            log_step(
+                "ERROR",
+                "Reject workflow failed",
+                employee=request_data["full_name"],
+                issue=issue_key,
+                error=e,
+            )
             client.chat_postMessage(
                 channel=SLACK_APPROVER_CHANNEL_ID,
                 text=f"❌ Rejection workflow failed for *{request_data['full_name']}*: {e}",
