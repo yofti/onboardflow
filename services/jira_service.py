@@ -65,7 +65,12 @@ def create_ticket(request_data):
         timeout=20,
     )
     if not response.ok:
-      log_step("ERROR", "Jira create ticket failed", status=response.status_code, body=response.text)
+        log_step(
+            "ERROR",
+            "Jira create ticket failed",
+            status=response.status_code,
+            body=response.text,
+        )
     response.raise_for_status()
 
     return response.json()
@@ -97,7 +102,12 @@ def add_comment(issue_key, comment_text):
     )
 
     if not response.ok:
-        log_step("ERROR", "Jira add comment failed", status=response.status_code, body=response.text)
+        log_step(
+            "ERROR",
+            "Jira add comment failed",
+            status=response.status_code,
+            body=response.text,
+        )
     response.raise_for_status()
     return response.json()
 
@@ -119,5 +129,10 @@ def transition_issue(issue_key, transition_id):
         timeout=20,
     )
     if not response.ok:
-        log_step("ERROR", "Jira transition failed", status=response.status_code, body=response.text)
+        log_step(
+            "ERROR",
+            "Jira transition failed",
+            status=response.status_code,
+            body=response.text,
+        )
     response.raise_for_status()
